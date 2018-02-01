@@ -9,33 +9,25 @@ ApplicationWindow {
     height: 900
     title: qsTr("AgvServerTest")
 
-    ListModel {
-        id:listModel
-        ListElement {
-            rfid:""
-            order: 0
-            param:"0"
-        }
-    }
-
     header: Rectangle{
         id:headRect
         width: 800
         height: 50
+        anchors.horizontalCenter: parent.horizontalCenter
         Text {
             id:rfidLabel
-            width: 200
+            width: 100
             anchors.verticalCenter:parent.verticalCenter
             anchors.left: parent.left
-            anchors.leftMargin: 80
+            anchors.leftMargin: 100
             color: "red"
             text: qsTr("RFID号")
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: rfidLabel.right
-            anchors.leftMargin: 20
-            width: 200
+            anchors.leftMargin: 100
+            width: 100
             id:orderLabel
             color: "red"
             text: qsTr("指令")
@@ -44,8 +36,8 @@ ApplicationWindow {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: orderLabel.right
-            anchors.leftMargin: 20
-            width: 200
+            anchors.leftMargin: 100
+            width: 100
             id:paramLabel
             color: "red"
             text: qsTr("参数")
@@ -74,7 +66,7 @@ ApplicationWindow {
                     btnAdd.color = "gray"
                 }
                 onClicked: {
-                    listModel.append({"rfid": "", "order":0,param:"0"})
+                    orderListModel.append({"rfid": "", "order":0,param:"0"})
                 }
             }
         }
@@ -86,50 +78,72 @@ ApplicationWindow {
         anchors.topMargin: 20
         anchors.bottom:footerRect.top
         anchors.bottomMargin: 20
-        model: listModel
+        model: orderListModel
         ScrollBar.vertical: ScrollBar {}
         delegate:Component {
             id: contactDelegate
             Rectangle{
+                anchors.horizontalCenter: parent.horizontalCenter
                 id:delegateRect
                 property int visualIndex: index
                 width: 800
-                height: rfidInput.height+10
-                ComboBox {
-                    id:rfidInput
+                height: rfidInput.height+30
+
+                TextInput {
                     width: 200
                     anchors.verticalCenter:parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: 10
-
-                    model: [qsTr("立即"), qsTr("空") ]
-                    editable: true
-                    editText:rfid
+                    id: rfidInput
+                    text: param
+                    validator:RegExpValidator{regExp: /[0-9]{0,10}/}
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -10
+                        color: "transparent"
+                        border.width: 1
+                    }
+                    onTextChanged: {
+                        if(rfidInput.text.length>0){
+                            var rfid = parseInt(rfidInput.text)
+                            orderListModel.modifyRfid(rfid,delegateRect.visualIndex)
+                        }
+                    }
                 }
 
                 ComboBox {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: rfidInput.right
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: 20
                     id:orderInput
                     width: 200
                     model: [qsTr("停止"), qsTr("前进"), qsTr("后退"), qsTr("左转"), qsTr("右转"), qsTr("MP3文件"), qsTr("MP3音量"), qsTr("前进到磁条检出"), qsTr("后退到磁条检出"), qsTr("升降插齿"), qsTr("不打断当前执行卡") ]
-                    currentIndex:order
+                    currentIndex:cmd
+                    onCurrentTextChanged: {
+                        orderListModel.modifyCmd(orderInput.currentIndex,delegateRect.visualIndex)
+                    }
                 }
 
 
-                TextEdit {
+                TextInput {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: orderInput.right
                     anchors.leftMargin: 20
                     id: paramInput
                     text: param
                     width: 200
+                    validator:RegExpValidator{regExp: /[0-9]{1,10}/}
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: -10
                         color: "transparent"
                         border.width: 1
+                    }
+                    onTextChanged: {
+                        if(paramInput.text.length>0){
+                            var param = parseInt(paramInput.text)
+                            orderListModel.modifyParam(param,delegateRect.visualIndex)
+                        }
                     }
                 }
 
@@ -137,7 +151,7 @@ ApplicationWindow {
                     id:btnDelete
                     width: 100
                     anchors.verticalCenter: parent.verticalCenter
-                    height: parent.height-20
+                    height: 30
                     anchors.left: paramInput.right
                     anchors.leftMargin: 20
                     border.width: 1
@@ -156,9 +170,7 @@ ApplicationWindow {
                             btnDelete.color = "gray"
                         }
                         onClicked: {
-                            //TODO
-                            console.log("visualIndex="+delegateRect.visualIndex);
-                            listModel.remove(delegateRect.visualIndex)
+                            orderListModel.remove(delegateRect.visualIndex)
                         }
                     }
                 }
@@ -169,11 +181,11 @@ ApplicationWindow {
     footer: Rectangle{
         id:footerRect
         width: parent.width
-        height:70
+        height:100
         Rectangle{
             id:btnExcute
             width: 250
-            height: parent.height
+            height: parent.height-50
             anchors.right: btnStop.left
             anchors.rightMargin: 20
             border.width: 1
@@ -193,13 +205,14 @@ ApplicationWindow {
                 }
                 onClicked: {
                     //TODO
+                    msgCenter.sendOrders(orderListModel);
                 }
             }
         }
         Rectangle{
             id:btnStop
             width: 250
-            height: parent.height
+            height:parent.height-50
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.leftMargin: 10
             border.width: 1
@@ -218,15 +231,14 @@ ApplicationWindow {
                     btnStop.color = "gray"
                 }
                 onClicked: {
-                    //TODO
-
+                    msgCenter.stopOrders();
                 }
             }
         }
         Rectangle{
             id:btnClear
             width: 250
-            height: parent.height
+            height: parent.height-50
             anchors.left: btnStop.right
             anchors.leftMargin: 20
             border.width: 1
@@ -245,15 +257,68 @@ ApplicationWindow {
                     btnClear.color = "gray"
                 }
                 onClicked: {
-                    listModel.clear()
+                    orderListModel.clear()
+                }
+            }
+        }
+
+        Rectangle{
+            id:tipRect
+            width: parent.width
+            height: 50
+            anchors.bottom: parent.bottom
+            Text {
+                id: tipText
+                text: qsTr("hahhahaha")
+                opacity:0
+                anchors.centerIn: parent
+                color: "red"
+                font.pixelSize: 15
+
+                function showStr(txt){
+                    tipText.text = txt;
+                    showTipAnimation.start()
+                }
+                SequentialAnimation {
+                    id:showTipAnimation
+                    //渐入
+                    NumberAnimation {
+                        target: tipText
+                        property: "opacity"
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                        from:0
+                        to:1
+                    }
+                    //持续
+                    PauseAnimation {
+                        duration: 3000
+                    }
+                    //渐出
+                    NumberAnimation {
+                        target: tipText
+                        property: "opacity"
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                        from:1
+                        to:0
+                    }
                 }
             }
         }
     }
 
-
     Connections{
         target:msgCenter
+
+        onTip:{
+            //tipstr
+            tipText.showStr(tipstr)
+        }
+
+        onRequestFail:{
+            tipText.showStr(qsTr("请求失败或超时"))
+        }
 
     }
 }

@@ -16,7 +16,9 @@ SOURCES += main.cpp \
     qyhzmqconnection.cpp \
     qyhzmqconnectionworker.cpp \
     msgcenter.cpp \
-    global.cpp
+    global.cpp \
+    order.cpp \
+    qyhorderlistmodel.cpp
 
 RESOURCES += qml.qrc
 
@@ -53,4 +55,6 @@ HEADERS += \
     qyhzmqconnection.h \
     qyhzmqconnectionworker.h \
     msgcenter.h \
-    global.h
+    global.h \
+    order.h \
+    qyhorderlistmodel.h

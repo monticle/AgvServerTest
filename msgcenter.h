@@ -6,9 +6,12 @@
 #include <QTimer>
 
 #include "userinfo.h"
+#include "order.h"
+#include "qyhorderlistmodel.h"
 
 class QyhZmqConnection;
 //处理所有的业务逻辑
+
 
 class MsgCenter : public QObject
 {
@@ -21,17 +24,16 @@ public:
     //登录调用
     void login(QString username,QString password);
 
-    void sendOrders();
 
-    void stopOrders();
+    //一个进入队列
+    Q_INVOKABLE void sendOrders(QyhOrderListModel *m);
+
+    //发送停止指令
+    Q_INVOKABLE void stopOrders();
 
 signals:
-
-    //全局的 发送请求失败
-    void sendRequestFail();//发送请求失败
-
-    //全局的 等待返回超时
-    void waitResponseTimeOut();//等待返回超时
+    //全局的//请求失败
+    void requestFail();//请求失败
 
     //全局的 错误提示信息
     void tip(QString tipstr);//全局的提示信息
@@ -39,8 +41,6 @@ signals:
     //全局的 登录成功
     void loginSuccess(int role);
 
-    //任务
-    void taskDetailSuccess();
 public slots:
 
     void parseOneMsg(QString oneMsg);
@@ -63,6 +63,8 @@ private:
     bool getReponseParam(const QString &xmlStr,QMap<QString,QString> &params,QList<QMap<QString,QString> > &datalist);
 
     const QString DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss";//统一时间格式
+
+    QList<Order> orders;
 };
 
 #endif // MSGCENTER_H

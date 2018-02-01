@@ -4,6 +4,7 @@
 #include <QDir>
 
 #include "msgcenter.h"
+#include "qyhorderlistmodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,11 +18,14 @@ int main(int argc, char *argv[])
     MsgCenter msgCenter;
     msgCenter.init();
 
+    QyhOrderListModel orderListModel;
+
     QQmlApplicationEngine engine;
 
     QQmlContext *ctxt = engine.rootContext();
     ctxt->setContextProperty("g_strExeRoot",g_strExeRoot);
     ctxt->setContextProperty("msgCenter",(QObject *)&msgCenter);
+    ctxt->setContextProperty("orderListModel",&orderListModel);
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())

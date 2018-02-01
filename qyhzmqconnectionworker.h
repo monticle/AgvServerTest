@@ -12,6 +12,7 @@ public:
 
 signals:
     void onRep(QString s);
+    void sendFail();
 public slots:
     void init(QString ip,int port);
     void reqAndRep(QString s);

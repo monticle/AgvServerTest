@@ -1,5 +1,8 @@
 #include "qyhzmqconnectionworker.h"
 #include <sstream>
+
+#include <QDebug>
+
 QyhZmqConnectionWorker::QyhZmqConnectionWorker(QObject *parent) : QObject(parent),client_socket_(NULL)
 {
 
@@ -16,7 +19,7 @@ void QyhZmqConnectionWorker::init(QString ip,int port)
     }
     client_socket_ = new zmq::socket_t(ctx_,ZMQ_REQ);
 
-    int timeout = 1000;
+    int timeout = 0;
     zmq_setsockopt (client_socket_, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
     zmq_setsockopt (client_socket_, ZMQ_SNDTIMEO, &timeout, sizeof(timeout));
 
@@ -38,11 +41,23 @@ void QyhZmqConnectionWorker::reqAndRep(QString s)
 {
     try{
         zmq::message_t msg(s.toStdString().c_str(),s.toStdString().length());
-        client_socket_->send(msg);
-        zmq::message_t m;
-        client_socket_->recv(&m);
-        std::string rep = std::string((char *)m.data(),m.size());
-        emit onRep(QString::fromStdString(rep));
+        if(client_socket_->send(msg)){
+            zmq::message_t m;
+            if(client_socket_->recv(&m)){
+                std::string rep = std::string((char *)m.data(),m.size());
+                emit onRep(QString::fromStdString(rep));
+            }else{
+                //接收失败
+                emit sendFail();
+            }
+        }else{
+            //发送失败
+            emit sendFail();
+        }
     }
-    catch(std::exception e){}
+    catch(std::exception e){
+        emit sendFail();
+    }
+
+    qDebug()<<"1111111";
 }

@@ -9,6 +9,7 @@ QyhZmqConnection::QyhZmqConnection(QObject *parent) : QObject(parent)
     connect(this, &QyhZmqConnection::siginit, worker, &QyhZmqConnectionWorker::init);
     connect(this, &QyhZmqConnection::reqAndRep, worker, &QyhZmqConnectionWorker::reqAndRep);
     connect(worker, &QyhZmqConnectionWorker::onRep, this, &QyhZmqConnection::onRep);
+    connect(worker,&QyhZmqConnectionWorker::sendFail,this,&QyhZmqConnection::requestFail);
     workthread.start();
 }
 

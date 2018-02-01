@@ -18,6 +18,7 @@ signals:
     void siginit(QString ip,int port);
     void reqAndRep(QString req);
     void onRep(QString rep);
+    void requestFail();
 public slots:
 
 };

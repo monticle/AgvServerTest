@@ -23,6 +23,7 @@ void MsgCenter::init()
     }
     tcpsocket = new QyhZmqConnection;
     connect(tcpsocket,SIGNAL(onRep(QString)),this,SLOT(parseOneMsg(QString)));
+    connect(tcpsocket,SIGNAL(requestFail()),this,SIGNAL(requestFail()));
     tcpsocket->init("127.0.0.1",5555);
 
     QyhSleep(3000);
@@ -34,7 +35,7 @@ void MsgCenter::parseSendWaitResponse(QMap<QString,QString> &requestData, QList<
     QString xml = getRequestXml(requestData,requestDatalist);
     getResponse = false;
     qDebug() << "send:"<<xml;
-    tcpsocket->reqAndRep(xml);
+    tcpsocket->req(xml);
 }
 
 void MsgCenter::parseOneMsg(QString oneMsg)
@@ -191,15 +192,40 @@ void MsgCenter::login(QString username,QString password)
     parseSendWaitResponse(requestData,requestDatalist);
 }
 
-
-void MsgCenter::sendOrders()
+void MsgCenter::sendOrders(QyhOrderListModel *m)
 {
+    QList<Order> list = m->getDataList();
 
+    QString ss;
+
+    foreach (auto t, list) {
+        ss+= QString("%1,%2,%3;").arg(t.rfid()).arg(t.cmd()).arg(t.param());
+    }
+    QMap<QString,QString> requestData;
+    QList<QMap<QString,QString> > requestDatalist;
+
+    requestData.insert("type","task");
+    requestData.insert("todo","excute");
+    requestData.insert("queuenumber",QString("%1").arg(++queueNumber));
+
+    requestData.insert("orders",ss);
+
+    parseSendWaitResponse(requestData,requestDatalist);
 }
 
 void MsgCenter::stopOrders()
 {
+    QString ss = QString("0,0,0;");
 
+    QMap<QString,QString> requestData;
+    QList<QMap<QString,QString> > requestDatalist;
+
+    requestData.insert("type","task");
+    requestData.insert("todo","excute");
+    requestData.insert("queuenumber",QString("%1").arg(++queueNumber));
+
+    requestData.insert("orders",ss);
+
+    parseSendWaitResponse(requestData,requestDatalist);
 }
-
 
